@@ -17,3 +17,27 @@ aws emr create-cluster --termination-protected \
 
 You can also set it up your cluster using the web-dashboard.  You will want to make sure that you use emr-4.5.0, and have Hive and Spark installed.   The other applications are optional for this script.
 
+Edit the uri to the location of your MIMIC III files (uncompresssed) and the folder you want tthe generated files to be written to.  
+
+Once the EMR cluster is ready you copy your file to the EMR cluster:
+
+```bash
+scp -i <-your-keypair.pem-> location/to/MakeSeverityScoreScript.scala hadoop@ec2-xx-xx-xx-xx.computer-x.amazonaws.com:~/
+```
+
+You then login to your cluster:
+
+```bash
+ssh -i <-your-keypair.pem-> hadoop@ec2-xx-xx-xx-xx.computer-x.amazonaws.com:~/
+```
+
+You can then start the spark shell
+```bash
+spark-shell --packages com.databricks:spark-csv_2.10:1.4.0
+```
+
+Once the shell is loaded you can run the MakeSeverityScoreScript.scala file as as script with the following code.
+
+```scala
+:load MakeSeverityScoreScript.scala
+```
