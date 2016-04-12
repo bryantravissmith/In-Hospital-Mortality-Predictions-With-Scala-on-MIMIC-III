@@ -13,6 +13,20 @@ import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 
 
+val uri:String = "s3://mimic3-project-files/"
+val folder:String = "outputs/"
+
+def registerSchema(filename:String, tableName:String,
+    tableSchema:StructType,uri:String,sqlContext:SQLContext){
+
+    val table = sqlContext.read.
+      format("com.databricks.spark.csv").
+      option("header", "true").
+      schema(tableSchema).load(uri+filename).cache()
+    table.registerTempTable(tableName.toUpperCase)
+  }
+
+
 val customSchema = StructType(Array(
     StructField("ROW_ID", IntegerType, true),
     StructField("SUBJECT_ID", IntegerType, true),
@@ -35,13 +49,7 @@ val customSchema = StructType(Array(
     StructField("HAS_IOEVENTS_DATA", IntegerType, true),
     StructField("HAS_CHARTEVENTS_DATA", IntegerType, true)))
     
-val admissions = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(customSchema).
-    load("/input/ADMISSIONS.csv").cache()
-    
-admissions.registerTempTable("admissions")
+registerSchema("ADMISSIONS.csv","admissions",customSchema,uri,sqlContext)
 
 val patientsSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("SUBJECT_ID", IntegerType, true),
@@ -52,13 +60,7 @@ val patientsSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("DOD_SSN", TimestampType, true),
     StructField("EXPIRE_FLAG", IntegerType, true)))
     
-val patients = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(patientsSchema).
-    load("/input/PATIENTS.csv").cache()
-    
-patients.registerTempTable("patients")
+registerSchema("PATIENTS.csv","patients",patientsSchema,uri,sqlContext)
 
 val noteeventsSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("SUBJECT_ID", IntegerType, true),
@@ -72,13 +74,7 @@ val noteeventsSchema = StructType(Array(StructField("ROW_ID", IntegerType, true)
     StructField("ISERROR", StringType, true),
     StructField("TEXT", StringType, true)))
     
-val noteevents = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(noteeventsSchema).
-    load("/input/NOTEEVENTS_PROCESSED_2.csv").cache()
-
-noteevents.registerTempTable("noteevents")
+registerSchema("NOTEEVENTS_PROCESSED_2.csv","noteevents",noteeventsSchema,uri,sqlContext)
 
 val icustaysSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("SUBJECT_ID", IntegerType, true),
@@ -93,13 +89,8 @@ val icustaysSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("OUTTIME", TimestampType, true),
     StructField("LOS", DoubleType, true)))
     
-val icustays = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(icustaysSchema).
-    load("/input/ICUSTAYS.csv").cache()
-    
-icustays.registerTempTable("icustays")
+
+registerSchema("ICUSTAYS.csv","icustays",icustaysSchema,uri,sqlContext)
 
 val oasisSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("hadm_id", IntegerType, true),
@@ -130,13 +121,7 @@ val oasisSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("electivesurgery", IntegerType, true),
     StructField("electivesurgery_score", IntegerType, true)))
     
-val oasis = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(oasisSchema).
-    load("/input/OASIS.csv").cache()
-    
-oasis.registerTempTable("oasis")
+registerSchema(folder+"OASIS.csv","oasis",oasisSchema,uri,sqlContext) 
 
 val sapsiiSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("hadm_id", IntegerType, true),
@@ -158,15 +143,9 @@ val sapsiiSchema = StructType(Array(StructField("subject_id", IntegerType, true)
     StructField("gcs_score", IntegerType, true),
     StructField("comorbidity_score", IntegerType, true),
     StructField("UrineOutput_score", IntegerType, true),
-    StructField("admissiontype_score", IntegerType, true)))
-    
-val sapsii = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(sapsiiSchema).
-    load("/input/SAPSII.csv").cache()
-    
-sapsii.registerTempTable("sapsii")
+    StructField("admissiontype_score", IntegerType, true)))    
+
+registerSchema(folder+"SAPSII.csv","sapsii",sapsiiSchema,uri,sqlContext) 
 
 val sofaSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("hadm_id", IntegerType, true),
@@ -179,27 +158,17 @@ val sofaSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("cns", IntegerType, true),
     StructField("renal", IntegerType, true)))
 
-val sofa = sqlContext.read.
-    format("com.databricks.spark.csv").
-    option("header", "true").
-    schema(sofaSchema).
-    load("/input/SOFA.csv").cache()
-    
-sofa.registerTempTable("sofa")
 
-admissions.count
-patients.count
-noteevents.count
-icustays.count
-oasis.count
-sofa.count
-sapsii.count
+registerSchema(folder+"SOFA.csv","sofa",sofaSchema,uri,sqlContext) 
+
+
 
 val trainer: (Int => Int) = (arg:Int) => 0
 val sqlTrainer = udf(trainer)
 val tester: (Int => Int) = (arg:Int) => 1
 val sqlTester = udf(tester)
 
+val patients = sqlContext.sql("SELECT * FROM patients")
 val splits = patients.randomSplit(Array(0.7, 0.3), seed = 11L)
 val train_patients = splits(0).select("subject_id").withColumn("test",sqlTrainer(col("subject_id")))
 val test_patients = splits(1).select("subject_id").withColumn("test",sqlTester(col("subject_id")))
