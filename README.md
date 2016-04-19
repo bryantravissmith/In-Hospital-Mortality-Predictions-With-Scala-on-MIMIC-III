@@ -41,3 +41,16 @@ Once the shell is loaded you can run the MakeSeverityScoreScript.scala file as a
 ```scala
 :load MakeSeverityScoreScript.scala
 ```
+
+After the data is saved you can build the models by enter the spark shell with the following command.  The models were built successfully using 7 r3.xlarge EMR cluster with Spark 1.6.
+
+```bash
+SPARK_REPL_OPTS="-XX:MaxPermSize=10g" spark-shell --packages com.databricks:spark-csv_2.10:1.4.0 --conf spark.driver.maxResultSize=10g --conf spark.driver.memory=10g --conf spark.executor.memory=15g
+```
+
+Once the shell is loaded you will run the BuildAndSaveModels.scala file
+
+```bash
+:load BuildAndSaveModels.scala
+```
+
