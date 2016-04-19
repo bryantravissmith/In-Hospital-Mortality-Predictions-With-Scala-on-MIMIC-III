@@ -6,13 +6,12 @@ import org.apache.spark.ml.feature.{CountVectorizer, CountVectorizerModel}
 import org.apache.spark.ml.clustering.{LDA, LDAModel}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.linalg.{Vector,Vectors}
-import  org.apache.spark.sql.types._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Row
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
@@ -29,6 +28,7 @@ def registerSchema(filename:String, tableName:String,
     val table = sqlContext.read.
       format("com.databricks.spark.csv").
       option("header", "true").
+      option("nullValue", "null").
       schema(tableSchema).load(uri+filename).cache()
     table.registerTempTable(tableName.toUpperCase)
   }
@@ -80,7 +80,7 @@ val noteeventsSchema = StructType(Array(StructField("ROW_ID", IntegerType, true)
     StructField("ISERROR", StringType, true),
     StructField("TEXT", StringType, true)))
     
-registerSchema("NOTEEVENTS_PROCESSED_2.csv","noteevents",noteeventsSchema,uri,sqlContext)
+registerSchema("NOTEEVENTS_PROCESSED.csv","noteevents",noteeventsSchema,uri,sqlContext)
 
 val icustaysSchema = StructType(Array(StructField("ROW_ID", IntegerType, true),
     StructField("SUBJECT_ID", IntegerType, true),
@@ -127,7 +127,7 @@ val oasisSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("electivesurgery", IntegerType, true),
     StructField("electivesurgery_score", IntegerType, true)))
     
-registerSchema(folder+"OASIS.csv","oasis",oasisSchema,uri,sqlContext) 
+registerSchema("OASIS.csv","oasis",oasisSchema,uri+folder,sqlContext) 
 
 val sapsiiSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("hadm_id", IntegerType, true),
@@ -151,7 +151,7 @@ val sapsiiSchema = StructType(Array(StructField("subject_id", IntegerType, true)
     StructField("UrineOutput_score", IntegerType, true),
     StructField("admissiontype_score", IntegerType, true)))    
 
-registerSchema(folder+"SAPSII.csv","sapsii",sapsiiSchema,uri,sqlContext) 
+registerSchema("SAPSII.csv","sapsii",sapsiiSchema,uri+folder,sqlContext) 
 
 val sofaSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("hadm_id", IntegerType, true),
@@ -163,10 +163,7 @@ val sofaSchema = StructType(Array(StructField("subject_id", IntegerType, true),
     StructField("cardiovascular", IntegerType, true),
     StructField("cns", IntegerType, true),
     StructField("renal", IntegerType, true)))
-
-
-registerSchema(folder+"SOFA.csv","sofa",sofaSchema,uri,sqlContext) 
-
+registerSchema("SOFA.csv","sofa",sofaSchema,uri+folder,sqlContext) 
 
 
 val trainer: (Int => Int) = (arg:Int) => 0
@@ -175,7 +172,7 @@ val tester: (Int => Int) = (arg:Int) => 1
 val sqlTester = udf(tester)
 
 val patients = sqlContext.sql("SELECT * FROM patients")
-val splits = patients.randomSplit(Array(0.7, 0.3), seed = 11L)
+val splits = patients.randomSplit(Array(0.7, 0.3), seed = 11L)  //Seed Set for Reproducibility
 val train_patients = splits(0).select("subject_id").withColumn("test",sqlTrainer(col("subject_id")))
 val test_patients = splits(1).select("subject_id").withColumn("test",sqlTester(col("subject_id")))
 
@@ -222,12 +219,8 @@ val remover = new StopWordsRemover().
     setOutputCol("Filtered")
 
 val cleanedTokenized = remover.transform(regexTokenized)
-/*
-val cvModel = CountVectorizerModel.load("/input/models/countVectorizorModel")
-val idfModel = IDFModel.load("/input/models/idfModel")
-val countTokenized = cvModel.transform(cleanedTokenized)
-val idfTokenized = idfModel.transform(countTokenized)
-*/
+cleanedTokenized.cache()
+
 
 val cvModel: CountVectorizerModel = new CountVectorizer().
     setInputCol("Filtered").
@@ -242,7 +235,7 @@ val idf = new IDF().setInputCol("CountVector").setOutputCol("IDFVector")
 val idfModel = idf.fit(countTokenized)
 
 val idfTokenized = idfModel.transform(countTokenized)
-//idfTokenized.cache()
+idfTokenized.cache()
 //idfTokenized.show()
 
 //idfModel.save("/input/models/idfModel2")
@@ -261,27 +254,12 @@ val ldaTokenized = ldaModel.transform(idfTokenized)
 ldaTokenized.registerTempTable("ldaTokenized")
 //ldaTokenized.show()
 
-import org.apache.spark.sql.Row
-val schema = StructType(Array(StructField("Filtered",ArrayType(StringType,true),true)))
-val newWordRDD:RDD[String] = ldaTokenized.select("Filtered").rdd.map{case Row(s:Seq[x]) => s}.flatMap(w => w).map(s => s.toString).distinct()
-val newWordArrayRDD:RDD[Row] = newWordRDD.map(w => Row(Array(w)))
-val wordDF = sqlContext.createDataFrame(newWordArrayRDD,schema)
-val wordCountDF = cvModel.transform(wordDF)
-val wordMap = wordCountDF.
-    map{case Row(w:Seq[String],v:Vector) => (v.numNonzeros,w.head,v)}.
-    filter(_._1 == 1).
-    map{case(c,w,v) => (v.argmax,w)}.
-    collect.
-    toMap
-
-ldaModel.describeTopics(15).select("termIndices").map{case Row(a:Seq[Int]) => a.toArray.map(i => wordMap(i))}.take(35).foreach(s => println(s.toList))
 
 ldaTokenized.select("TopicVector").rdd.map{ case Row(v:Vector) => (v.argmax,1) }.reduceByKey( _ + _ ).collect().foreach(println)
 
 val firstDayScores = sqlContext.sql("""
 with subset as (
-    SELECT subject_id, hadm_id, min(intime) as firstin
-    FROM icustays GROUP BY subject_id, hadm_id)
+    SELECT subject_id, hadm_id, min(intime) as firstin FROM icustays GROUP BY subject_id, hadm_id)
 
 SELECT ad.HOSPITAL_EXPIRE_FLAG, ad.subject_id,ad.hadm_id, ad.admission_type,oasis.OASIS,sapsii.SAPSII,sofa.SOFA,pat.GENDER, 
     ((unix_timestamp(ad.admittime)-unix_timestamp(pat.DOB))/(86400*365)) as age,
@@ -309,7 +287,8 @@ AND icu.icustay_id = sofa.icustay_id
 JOIN patients pat
 ON ad.subject_id = pat.subject_id
 """).cache()
-firstDayScores.count()
+//firstDayScores.show()
+//firstDayScores.count()
 firstDayScores.registerTempTable("firstDayScore")
 
 val dataDf = sqlContext.sql("""
@@ -331,8 +310,8 @@ FROM firstDayScore
 JOIN patient_labels
 ON patient_labels.subject_id = firstDayScore.subject_id
 """)
-dataDf.count()
-dataDf.show()
+//dataDf.count()
+//dataDf.show()
 dataDf.registerTempTable("data")
 
 val allData = sqlContext.sql("""
@@ -342,9 +321,9 @@ JOIN data
 ON data.subject_id = ldaTokenized.subject_id
 AND data.hadm_id = ldaTokenized.hadm_id
 """)
+
 allData.count()
 allData.show()
-
 
 val assembler = new VectorAssembler().
 setInputCols(Array("TopicVector", 
@@ -360,12 +339,33 @@ setInputCols(Array("TopicVector",
     "age")).
 setOutputCol("ModelFeatures")
 
-val trainData = assembler.transform(allData)
+val assemblerNoText = new VectorAssembler().
+setInputCols(Array("isElective", 
+    "isNewborn",
+    "isUrgent",
+    "isEmergency",
+    "isMale",
+    "isFemale",
+    "oasis_score",
+    "sapsii_score",
+    "sofa_score",
+    "age")).
+setOutputCol("ModelFeatures")
 
-import org.apache.spark.sql.functions._
+val assemblerText = new VectorAssembler().
+setInputCols(Array("TopicVector")).
+setOutputCol("ModelFeatures")
+
+
+val trainData = assembler.transform(allData)
+val trainDataText = assemblerText.transform(allData)
+val trainDataNoText = assemblerNoText.transform(allData)
+
 val toDouble = udf[Double, String]( _.toDouble)
 
-val trainData2 = trainData.withColumn("Label", toDouble(trainData("hosp_death")))
+val trainDataLabeled = trainData.withColumn("Label", toDouble(trainData("hosp_death")))
+val trainDataTextLabeled = trainDataText.withColumn("Label", toDouble(trainDataText("hosp_death")))
+val trainDataNoTextLabeled = trainDataNoText.withColumn("Label", toDouble(trainDataNoText("hosp_death")))
 
 val lr = new LogisticRegression().
     setMaxIter(10).
@@ -376,228 +376,13 @@ val lr = new LogisticRegression().
     setProbabilityCol("ModelProbability") 
 
 // Fit the model
-val lrModel = lr.fit(trainData2)
-val results = lrModel.transform(trainData2)
+val lrModel = lr.fit(trainDataLabeled)
+val lrModelText = lr.fit(trainDataTextLabeled)
+val lrModelNoText = lr.fit(trainDataNoTextLabeled)
 
-results.select("Label","ModelProbability").schema.show()
-
-val scoreAndLabel = results.
-    select("Label","ModelProbability").
-    map{ case Row(l:Double,p:Vector) => (p(1),l) }
-val metrics = new BinaryClassificationMetrics(scoreAndLabel)
-val auROC = metrics.areaUnderROC()
-
-
-val testdocuments = sqlContext.sql("""
-SELECT noteevents.subject_id,noteevents.hadm_id,combindString(collect_list(cleanString(regexp_replace(regexp_replace(text,"[^a-zA-Z\\s]",' '),"NEWLINE",' ')))) as Status
-FROM noteevents 
-JOIN patient_labels
-ON patient_labels.subject_id = noteevents.subject_id
-AND patient_labels.test = 1
-WHERE storetime is not null
-AND iserror = '' 
-GROUP BY noteevents.subject_id, noteevents.hadm_id
-""").cache()
-
-val regexTokenizedTest = regexTokenizer.transform(testdocuments)
-val cleanedTokenizedTest = remover.transform(regexTokenizedTest)
-val countTokenizedTest = cvModel.transform(cleanedTokenizedTest)
-val idfTokenizedTest = idfModel.transform(countTokenizedTest)
-val ldaTokenizedTest = ldaModel.transform(idfTokenizedTest)
-ldaTokenizedTest.registerTempTable("ldaTokenizedTest")
-
-val allDataTest = sqlContext.sql("""
-SELECT ldaTokenizedTest.TopicVector, data.* 
-FROM ldaTokenizedTest 
-JOIN data
-ON data.subject_id = ldaTokenizedTest.subject_id
-AND data.hadm_id = ldaTokenizedTest.hadm_id
-""")
-
-val testData = assembler.transform(allDataTest)
-val testData2 = testData.withColumn("Label", toDouble(trainData("hosp_death")))
-
-val testResults = lrModel.transform(testData2)
-
-val testScoreAndLabel = testResults.
-    select("Label","ModelProbability").
-    map{ case Row(l:Double,p:Vector) => (p(1),l) }
-val testMetrics = new BinaryClassificationMetrics(testScoreAndLabel)
-val auROC = testMetrics.areaUnderROC()
-
-val roc = testMetrics.roc()
-val rocRDD:RDD[Row] = roc.map{ case (fpr:Double,tpr:Double) => Row(fpr:Double,tpr:Double)}
-
-val rocDf = roc.map{ case (fpr:Double,tpr:Double)} => Row(fpr,tpr)).toDF()
-val schemaROC = StructType(Array(StructField("FPR",DoubleType),StructField("FPR",DoubleType)))
-val rocDf = sqlContext.createDataFrame(rocRDD,schemaROC)
-
-def getAUC( days:Int ) : Double = {
-    val time = days*86400
-    val query = s"""SELECT noteevents.subject_id,noteevents.hadm_id,combindString(collect_list(cleanString(regexp_replace(regexp_replace(text,"[^a-zA-Z\\s]",' '),"NEWLINE",' ')))) as Status
-        FROM noteevents 
-        JOIN patient_labels
-        ON patient_labels.subject_id = noteevents.subject_id
-        AND patient_labels.test = 1
-        JOIN admissions 
-        ON noteevents.subject_id = admissions.subject_id
-        AND noteevents.hadm_id = admissions.hadm_id
-        WHERE storetime is not null
-        AND iserror = ''
-        AND unix_timestamp(admissions.admittime)+${time} < unix_timestamp(admissions.dischtime)
-        AND unix_timestamp(storetime) < unix_timestamp(admissions.dischtime)-86400
-        AND unix_timestamp(storetime) < unix_timestamp(admissions.admittime)+${time}
-        GROUP BY noteevents.subject_id, noteevents.hadm_id
-    """
-    val testdocuments = sqlContext.sql(query).cache()
-    val regexTokenizedTest = regexTokenizer.transform(testdocuments)
-    val cleanedTokenizedTest = remover.transform(regexTokenizedTest)
-    val countTokenizedTest = cvModel.transform(cleanedTokenizedTest)
-    val idfTokenizedTest = idfModel.transform(countTokenizedTest)
-    val ldaTokenizedTest = ldaModel.transform(idfTokenizedTest)
-    ldaTokenizedTest.registerTempTable("ldaTokenizedTest")
-
-    val allDataTest = sqlContext.sql("""
-    SELECT ldaTokenizedTest.TopicVector, data.* 
-    FROM ldaTokenizedTest 
-    JOIN data
-    ON data.subject_id = ldaTokenizedTest.subject_id
-    AND data.hadm_id = ldaTokenizedTest.hadm_id
-    """)
-
-    val testData = assembler.transform(allDataTest)
-    val testData2 = testData.withColumn("Label", toDouble(trainData("hosp_death")))
-
-    val testResults = lrModel.transform(testData2)
-
-    val testScoreAndLabel = testResults.
-        select("Label","ModelProbability").
-        map{ case Row(l:Double,p:Vector) => (p(1),l) }
-    val testMetrics = new BinaryClassificationMetrics(testScoreAndLabel)
-    val auROC = testMetrics.areaUnderROC()
-    auROC
-}
-
-val lrT = new LogisticRegression().
-    setMaxIter(10).
-    setRegParam(0.0).
-    setFeaturesCol("TopicVector").
-    setLabelCol("Label").
-    setPredictionCol("ModelPrediction").
-    setProbabilityCol("ModelProbability") 
-
-// Fit the model
-val lrTModel = lrT.fit(trainData2)
-val textResults = lrTModel.transform(trainData2)
-
-val textScoreAndLabel = textResults.
-    select("Label","ModelProbability").
-    map{ case Row(l:Double,p:Vector) => (p(1),l) }
-val textMetrics = new BinaryClassificationMetrics(textScoreAndLabel)
-val textAuROC = textMetrics.areaUnderROC()
-
-def getTextAUC( days:Int ) : Double = {
-    val time = days*86400
-    val query = s"""SELECT noteevents.subject_id,noteevents.hadm_id,combindString(collect_list(cleanString(regexp_replace(regexp_replace(text,"[^a-zA-Z\\s]",' '),"NEWLINE",' ')))) as Status
-        FROM noteevents 
-        JOIN patient_labels
-        ON patient_labels.subject_id = noteevents.subject_id
-        AND patient_labels.test = 1
-        JOIN admissions 
-        ON noteevents.subject_id = admissions.subject_id
-        AND noteevents.hadm_id = admissions.hadm_id
-        WHERE storetime is not null
-        AND iserror = ''
-        AND unix_timestamp(admissions.admittime)+${time} < unix_timestamp(admissions.dischtime)
-        AND unix_timestamp(storetime) < unix_timestamp(admissions.dischtime)-86400
-        AND unix_timestamp(storetime) < unix_timestamp(admissions.admittime)+${time}
-        GROUP BY noteevents.subject_id, noteevents.hadm_id
-    """
-    val testdocuments = sqlContext.sql(query).cache()
-    val regexTokenizedTest = regexTokenizer.transform(testdocuments)
-    val cleanedTokenizedTest = remover.transform(regexTokenizedTest)
-    val countTokenizedTest = cvModel.transform(cleanedTokenizedTest)
-    val idfTokenizedTest = idfModel.transform(countTokenizedTest)
-    val ldaTokenizedTest = ldaModel.transform(idfTokenizedTest)
-    ldaTokenizedTest.registerTempTable("ldaTokenizedTest")
-
-    val allDataTest = sqlContext.sql("""
-    SELECT ldaTokenizedTest.TopicVector, data.* 
-    FROM ldaTokenizedTest 
-    JOIN data
-    ON data.subject_id = ldaTokenizedTest.subject_id
-    AND data.hadm_id = ldaTokenizedTest.hadm_id
-    """)
-
-    val testData = assembler.transform(allDataTest)
-    val testData2 = testData.withColumn("Label", toDouble(trainData("hosp_death")))
-
-    val testResults = lrTModel.transform(testData2)
-
-    val testScoreAndLabel = testResults.
-        select("Label","ModelProbability").
-        map{ case Row(l:Double,p:Vector) => (p(1),l) }
-    val testMetrics = new BinaryClassificationMetrics(testScoreAndLabel)
-    val auROC = testMetrics.areaUnderROC()
-    auROC
-}
-
-
-
-
-val testdocuments = sqlContext.sql("""
-SELECT noteevents.subject_id,noteevents.hadm_id,combindString(collect_list(cleanString(regexp_replace(regexp_replace(text,"[^a-zA-Z\\s]",' '),"NEWLINE",' ')))) as Status
-FROM noteevents 
-JOIN patient_labels
-ON patient_labels.subject_id = noteevents.subject_id
-AND patient_labels.test = 1
-JOIN admissions 
-ON noteevents.subject_id = admissions.subject_id
-AND noteevents.hadm_id = admissions.hadm_id
-WHERE storetime is not null
-AND iserror = '' 
-AND unix_timestamp(storetime) < unix_timestamp(admissions.admittime)+86400
-GROUP BY noteevents.subject_id, noteevents.hadm_id
-""").cache()
-val regexTokenizedTest = regexTokenizer.transform(testdocuments)
-val cleanedTokenizedTest = remover.transform(regexTokenizedTest)
-val countTokenizedTest = cvModel.transform(cleanedTokenizedTest)
-val idfTokenizedTest = idfModel.transform(countTokenizedTest)
-val ldaTokenizedTest = ldaModel.transform(idfTokenizedTest)
-ldaTokenizedTest.registerTempTable("ldaTokenizedTest")
-
-val allDataTest = sqlContext.sql("""
-SELECT ldaTokenizedTest.TopicVector, data.* 
-FROM ldaTokenizedTest 
-JOIN data
-ON data.subject_id = ldaTokenizedTest.subject_id
-AND data.hadm_id = ldaTokenizedTest.hadm_id
-""")
-
-val testData = assembler.transform(allDataTest)
-val testData2 = testData.withColumn("Label", toDouble(trainData("hosp_death")))
-
-val testResults = lrModel.transform(testData2)
-
-val testScoreAndLabel = testResults.
-    select("Label","ModelProbability").
-    map{ case Row(l:Double,p:Vector) => (p(1),l) }
-val testMetrics = new BinaryClassificationMetrics(testScoreAndLabel)
-val auROC = testMetrics.areaUnderROC()
-
-
-
-
-sqlContext.sql("""
-SELECT noteevents.subject_id,noteevents.hadm_id,combindString(collect_list(cleanString(regexp_replace(regexp_replace(text,"[^a-zA-Z\\s]",' '),"NEWLINE",' ')))) as Status
-FROM noteevents 
-JOIN patient_labels
-ON patient_labels.subject_id = noteevents.subject_id
-AND patient_labels.test = 0
-WHERE storetime is not null
-AND iserror = '' 
-GROUP BY noteevents.subject_id, noteevents.hadm_id
-""").count()
-
-
-
+cvModel.save(uri+"models/cvModel")
+idfModel.save(uri+"models/idfModel")
+ldaModel.save(uri+"models/ldaModel")
+lrModel.save(uri+"models/lrModel")
+lrModelText.save(uri+"models/lrModelText")
+lrModelNoText.save(uri+"models/lrModelNoText")

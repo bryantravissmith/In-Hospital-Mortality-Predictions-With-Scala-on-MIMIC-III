@@ -10,13 +10,16 @@ while True:
 	line = read_file.readline()
 	if not line:
 		break
-	new_line = ' '.join(line.replace("\n","").split())
+	new_line = ' '.join(line.replace("\n"," NEWLINE ").split())
 	quotes += line.count("\"")
 	while quotes % 2 == 1:
 		line = read_file.readline()
 		quotes += line.count("\"")
 		new_line += ' '
-		new_line += ' '.join(line.replace("\n","").split())
+		if quotes % 2 == 1:
+			new_line += ' '.join(line.replace("\n"," NEWLINE ").split())
+		else:
+			new_line += ' '.join(line.replace("\n"," ").split())
 	new_line += "\n"
 	count+=1
 	write_file.write(new_line)
