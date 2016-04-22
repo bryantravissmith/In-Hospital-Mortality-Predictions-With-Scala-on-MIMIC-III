@@ -30,7 +30,9 @@ All the code assumed a uri set to the S3 bucket location of of your MIMIC III fi
 
 ## Outline of Process to Reproduce Research
 
-To reporduce my results for my research process you will need to run the scripts in the following order:
+The first step is to pre-process the NOTEEVENTS.csv file.  The text is multilined, and to be consumable by sparksql we need to convert the text for each note to be single lined.   The python script will preprocess the NOTEEVENTS.csv to NOTEEVENTS_PROCESSED.csv.  This new file should upload to the S3 bucket.
+
+To reporduce my results you will need to run the scripts in the following order:
 
 1.  MakeServerityScoresScript.scala ( ~ 20 minutes )
 2.  BuildAndSaveModels.scala ( ~ 20 minutes )
@@ -41,6 +43,16 @@ To reporduce my results for my research process you will need to run the scripts
 The first script will build and save the various serverity scores used in the research to an output folder you specificy in your S3 bucket.  The second script builds and save multiple text, topic, and logistic models to a folder you specify in your S3 bucket.  The third rebuilds and scores the models (without saving) an a 70%/30% train/test split 10-fold crosss validation.  The values are printed to the console.  The 4th script scores the time-varying performance for the three logisitic models saved out to your S3 bucket.  The results for all three models are printed out to the console.  The last script finds to the most important words in the LDA topic model.  The results are also printed out to the console.   
 
 ## Detailed Instructions
+
+You will need to download the MIMIC III data and uncompress the files.   After they are uncompressed you will needed to run the python script in the same location as the files
+
+```bash
+python processnotes.py
+```
+
+Upload your uncompressed data to an S3 bucket, including the new file. to your S3 bucket.
+
+Start your EMR cluster.
 
 After your EMR cluster is running, I copy the scall files to the home directory of the master node.
 
