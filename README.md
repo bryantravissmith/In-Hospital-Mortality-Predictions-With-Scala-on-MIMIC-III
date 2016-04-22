@@ -42,10 +42,10 @@ The first script will build and save the various serverity scores used in the re
 
 ## Detailed Instructions
 
-Once the EMR cluster is ready you copy your file to the EMR cluster:
+After your EMR cluster is running, I copy the scall files to the home directory of the master node.
 
 ```bash
-scp -i <-your-keypair.pem-> location/to/MakeSeverityScoreScript.scala hadoop@ec2-xx-xx-xx-xx.computer-x.amazonaws.com:~/
+scp -i <-your-keypair.pem-> location/to/repo/*.scala hadoop@ec2-xx-xx-xx-xx.computer-x.amazonaws.com:~/
 ```
 
 You then login to your cluster:
@@ -54,26 +54,30 @@ You then login to your cluster:
 ssh -i <-your-keypair.pem-> hadoop@ec2-xx-xx-xx-xx.computer-x.amazonaws.com:~/
 ```
 
-You can then start the spark shell
-```bash
-spark-shell --packages com.databricks:spark-csv_2.10:1.4.0
-```
-
-Once the shell is loaded you can run the MakeSeverityScoreScript.scala file as as script with the following code.
-
-```scala
-:load MakeSeverityScoreScript.scala
-```
-
-After the data is saved you can build the models by enter the spark shell with the following command.  The models were built successfully using 7 r3.xlarge EMR cluster with Spark 1.6.
+Once you are logged into your master node you can start your spark-shell with the following commands.  There are a number of parameters set to increase the maximum size of the object.  Not using them left myself and others running into memory errors when building the LDA topic model.
 
 ```bash
 SPARK_REPL_OPTS="-XX:MaxPermSize=10g" spark-shell --packages com.databricks:spark-csv_2.10:1.4.0 --conf spark.driver.maxResultSize=10g --conf spark.driver.memory=10g --conf spark.executor.memory=15g
 ```
 
-Once the shell is loaded you will run the BuildAndSaveModels.scala file
+Once the shell is loaded you can run the scipts using the :load command:
 
-```bash
+```scala
+:load MakeSeverityScoreScript.scala
+```
+
+```scala
 :load BuildAndSaveModels.scala
 ```
 
+```scala
+:load CrossValidateRetrospective.scala
+```
+
+```scala
+:load GetTimeVaryingAUCsOnTestData.scala
+````
+
+```scala
+:load TopWordsInLDAModel.scala
+```
