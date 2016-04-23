@@ -19,7 +19,7 @@
 %% Legal Notice:
 %% This code is offered as-is without any warranty either expressed or
 %% implied; without even the implied warranty of MERCHANTABILITY or
-%% FITNESS FOR A PARTICULAR PURPOSE! 
+%% FITNESS FOR A PARTICULAR PURPOSE!
 %% User assumes all risk.
 %% In no event shall IEEE or any contributor to this code be liable for
 %% any damages or losses, including, but not limited to, incidental,
@@ -136,7 +136,7 @@
 % graphicx was written by David Carlisle and Sebastian Rahtz. It is
 % required if you want graphics, photos, etc. graphicx.sty is already
 % installed on most LaTeX systems. The latest version and documentation
-% can be obtained at: 
+% can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/required/graphics/
 % Another good source of documentation is "Using Imported Graphics in
 % LaTeX2e" by Keith Reckdahl which can be found at:
@@ -296,8 +296,8 @@
 % \let\MYoriglatexcaption\caption
 % \renewcommand{\caption}[2][\relax]{\MYoriglatexcaption[#2]{#2}}
 %\fi
-% endfloat.sty was written by James Darrell McCauley, Jeff Goldberg and 
-% Axel Sommerfeldt. This package may be useful when used in conjunction with 
+% endfloat.sty was written by James Darrell McCauley, Jeff Goldberg and
+% Axel Sommerfeldt. This package may be useful when used in conjunction with
 % IEEEtran.cls'  captionsoff option. Some IEEE journals/societies require that
 % submissions have lists of figures/tables at the end of the paper and that
 % figures/tables without any captions are placed on a page by themselves at
@@ -326,7 +326,7 @@
 % http://www.ctan.org/tex-archive/macros/latex/contrib/endfloat/
 %
 % The IEEEtran \ifCLASSOPTIONcaptionsoff conditional can also be used
-% later in the document, say, to conditionally put the References on a 
+% later in the document, say, to conditionally put the References on a
 % page by themselves.
 
 
@@ -388,7 +388,7 @@
 % As a general rule, do not put math, special symbols or citations
 % in the abstract or keywords.
 \begin{abstract}
-In this paper, we modeled the probability of in-hospital mortality once a patient is admitted to a hospital.  We combined the admission-time information such as age, gender, and admission types with severity scores and Latent Dirichlet Allocation topics from clinical notes to build a logistic model for predicting an in-hospital mortality event.   This method is applied to the MIMIC III dataset with 46,520 patients and 5813 in-hospital mortality events using Apache Spark for data processing, model building, and scoring.  This work validates previous work suggested features generated from Latent Dirichlet Allocation are effective.  The resulting models are informative for rank ordering the severity of patients in a real-time context.  Retrospective AUC on in-hospital mortality predictions is found to be between 0.869 - 0.909 in cross-validation, and batched-real-time predictions produce AUCs between 0.80 and 0.85.  This work can be easily adapted to a real-time processing and scoring of streaming medical-records.   
+In this paper, we modeled the probability of in-hospital mortality once a patient is admitted to a hospital.  We combined the admission-time information such as age, gender, and admission types with severity scores and Latent Dirichlet Allocation topics from clinical notes to build a logistic model for predicting an in-hospital mortality event.   This method is applied to the MIMIC III dataset with 46,520 patients and 5813 in-hospital mortality events using Apache Spark for data processing, model building, and scoring.  This work validates previous work suggested features generated from Latent Dirichlet Allocation are effective.  The resulting models are informative for rank ordering the severity of patients in a real-time context.  Retrospective AUC on in-hospital mortality predictions is found to be between 0.869 - 0.909 in cross-validation, and batched-real-time predictions produce AUCs between 0.80 and 0.85.  This work can be easily adapted to a real-time processing and scoring of streaming medical-records.
 \end{abstract}
 
 % Note that keywords are not normally used for peerreview papers.
@@ -410,7 +410,7 @@ Big data, Health analytics, Data mining, Machine learning, Spark, Topic Modeling
 \section{Introduction}
 \IEEEPARstart{B}{ig} data and health-care applications interact closely, thanks to the advancement in electronic data capturing technology such as electronic health records, on-body sensors and genome sequencing.  Technologies such as Apache Kafka are capable of creating streams of electronic medical records that can be consumed by Apache Spark for real- time processing, aggregation, predictions, and reporting of patient information.  This information can help augment medical practitioners’ judgments and understanding about patient conditions with the goal of improving medical care and outcomes.  Because doctors in hospitals, particularly Intensive Care Units (ICUs), are responsible for administering care among multiple patients with a wide variety of diseases and severities, prioritizing patient care can become amibiguous.  Predicting a patient's mortality risk can act as a surrogate for severity of a patients condition.
 
-This work focuses on using Apache Spark to reproduce previous results demonstrating the effectiveness of topic modeling using Latent Dirichlet Allocation (LDA) models on patient notes for predicting in-hospital mortality events.~\cite{ghassemi_unfolding_2014}  Many have built on the performance of these insights.  Nozomi et. al. did simultaneous modeling of multiple diseases with AUC's as large as 0.795~\cite{mozomi_2015}, Ghassemi has included time-series modeling with AUC's as large as 0.812~\cite{ghassemi_2015}, and Caballero et. al. used time-series with topics, expectation maximization, and kalman filters to produce AUC's as large as 0.866.~\cite{caballero_2015}.  The retrospective predictions of these works are similar to the original Ghassemi et. al. results.  
+This work focuses on using Apache Spark to reproduce previous results demonstrating the effectiveness of topic modeling using Latent Dirichlet Allocation (LDA) models on patient notes for predicting in-hospital mortality events.~\cite{ghassemi_unfolding_2014}  Many have built on the performance of these insights.  Nozomi et. al. did simultaneous modeling of multiple diseases with AUC's as large as 0.795~\cite{mozomi_2015}, Ghassemi has included time-series modeling with AUC's as large as 0.812~\cite{ghassemi_2015}, and Caballero et. al. used time-series with topics, expectation maximization, and kalman filters to produce AUC's as large as 0.866.~\cite{caballero_2015}.  The retrospective predictions of these works are similar to the original Ghassemi et. al. results.
 
 The work in this papers differs from the previous works in the following ways:
 
@@ -432,11 +432,11 @@ The work by Ghassemi et. al. highlighted that retrospective analysis, while show
 
 \subsection{Problem Formulation}
 
-The problem we address in this paper is attempting to assign patients daily probabilities of having an in-hospital mortality event from data available in electronic medical records.   The longer each patient is in the hospital, the more information is generated for each patient to better assess the severity of their condition.  Models that can look back and make accurate predictions are useful for determining which features are predictive, but are not necessarily useful in practice. 
+The problem we address in this paper is attempting to assign patients daily probabilities of having an in-hospital mortality event from data available in electronic medical records.   The longer each patient is in the hospital, the more information is generated for each patient to better assess the severity of their condition.  Models that can look back and make accurate predictions are useful for determining which features are predictive, but are not necessarily useful in practice.
 
 \subsection{Approach and Implementation}
 
-We used the MIMIC III 1.3 dataset~\cite{saeed_multiparameter_2011} which has 46,520 patients, 58976 hospital admissions, 2078705 clinical notes, and 5813 in-hospital mortality events.  We extract age, gender, admission type, and mortality outcome from the admissions records.  We then construct an  Oxford Acute Severity of Illness Score (OASIS), the Simplified Acute Physiology Score (SAPS) severity score, and Sepsis-related Organ Failure Assessment (SOFA) severity score from the first 24 hours of data for each patient.  Patients were divided into a training-test split of 70\% of patients assigned to the training set, and 30\% of patients assigned to the testing set.  This allowed a patient's complete record over multiple hospital and ICU admission to be fully contained within one set.  
+We used the MIMIC III 1.3 dataset~\cite{saeed_multiparameter_2011} which has 46,520 patients, 58976 hospital admissions, 2078705 clinical notes, and 5813 in-hospital mortality events.  We extract age, gender, admission type, and mortality outcome from the admissions records.  We then construct an  Oxford Acute Severity of Illness Score (OASIS), the Simplified Acute Physiology Score (SAPS) severity score, and Sepsis-related Organ Failure Assessment (SOFA) severity score from the first 24 hours of data for each patient.  Patients were divided into a training-test split of 70\% of patients assigned to the training set, and 30\% of patients assigned to the testing set.  This allowed a patient's complete record over multiple hospital and ICU admission to be fully contained within one set.
 
 We used the training set of patients, clinical notes and excluded discharge notes, notes without proper storage times, and notes with errors, to build a series of models including a Term Frequency Model, a TF-IDF model, and an LDA topic model.   Test data was never used to build a vocabulary, determine which vocabulary was informative, or used to build topics.  We began the process by using all notes for a hospital-admission and combined the notes after the removing words from the Onix stop word list as well as common units of lab results.   Each patient's notes were tokenized and turned into a term frequency vector that was limited to a vocabulary of 500,000 and a limit that a given token must appear in at least 20 collections of notes.   The term-frequency vector was transformed to a TF-IDF vector for each patient-hospital admission combination.  These steps reduce the vocabulary to approximately 23,000 terms.
 
@@ -449,9 +449,9 @@ The models produced by the process outline in the previous section are evaluated
 
 \subsection{Experimental Design}
 
-We have two evaluations of our models on the test set.   The first is to do a retrospective evaluation by creating a 24 hour prediction window for each admission, where data is removed from the system if it is acquired less than 24 hours of patient discharge.  The data is then transformed into feature vectors through the models built on the training data, then scored for prediction.   The AUC metric is then calculated for all admissions.   It is worth noting that all patients that stay less than 24 hours in the hospital will only have the initial admission features.   
+We have two evaluations of our models on the test set.   The first is to do a retrospective evaluation by creating a 24 hour prediction window for each admission, where data is removed from the system if it is acquired less than 24 hours of patient discharge.  The data is then transformed into feature vectors through the models built on the training data, then scored for prediction.   The AUC metric is then calculated for all admissions.   It is worth noting that all patients that stay less than 24 hours in the hospital will only have the initial admission features.
 
-The second way we evaluate our model is to evaluate it on a time-varying basis.  We do this by collecting all the data with the evaluation time period, constructing the features for that admission and within that time period, and evaluate the prediction that the admission will result in an in-hospital mortality.   There is some subtlety to this evaluation because each admission has a different length of stay.  If a patient has a length of stay less than 48 hours, they are not evaluated in windows that are larger than 48 hours.  Figure 1 illustrates the count of admissions remaining vs length of stay (top) and the percent admissions that turn into an in-hospital mortality events (bottom).  
+The second way we evaluate our model is to evaluate it on a time-varying basis.  We do this by collecting all the data with the evaluation time period, constructing the features for that admission and within that time period, and evaluate the prediction that the admission will result in an in-hospital mortality.   There is some subtlety to this evaluation because each admission has a different length of stay.  If a patient has a length of stay less than 48 hours, they are not evaluated in windows that are larger than 48 hours.  Figure 1 illustrates the count of admissions remaining vs length of stay (top) and the percent admissions that turn into an in-hospital mortality events (bottom).
 
 \begin{figure}[ht]
 \includegraphics[width=8cm]{admission_count}
@@ -479,16 +479,19 @@ Despite the increase rate of in-hospital mortality with longer hospital states, 
 
 Another limitation of the current work can be seen in examining topic 5 of appendix A.  It shows an exceptionally high odds-ratio for mortality in the model.  The top 20 words for this topic is associated with automobile accidents.  Despite being able to describe the severity of this event, and the LDA creating a topic for it, a model for the severity of this condition is likely not adding information that the medical practitioner in the hospital do not already have.
 
-Topics 10 and 18 both have the words pt and goal.  Each of these topics topics have odds ratios less than 1, and the words in these topics appear to be associated with recovery.  The model describes them as associated with lower risk of mortality.   The issue with this aspect of the process and model is that the information is in the system after a doctor has applied judgment to order physical therapy and a physical therapist has engaged the patient.   In these cases, the model is reflecting back practitioners' judgment instead of augmenting it.  
+Topics 10 and 18 both have the words pt and goal.  Each of these topics topics have odds ratios less than 1, and the words in these topics appear to be associated with recovery.  The model describes them as associated with lower risk of mortality.   The issue with this aspect of the process and model is that the information is in the system after a doctor has applied judgment to order physical therapy and a physical therapist has engaged the patient.   In these cases, the model is reflecting back practitioners' judgment instead of augmenting it.
 
 In both of the above examples, the model is accurately capturing in-hospital mortality risk, but in situations that are not possible to predict.  The value-add for severity scores are in situations where the immediate risk is not obvious to an experienced medical practitioner.  It seems that models built on clinical notes are capable of capturing and describing a patient's states and risks of in-hospital mortality.  It also appears that some of the clinical notes capture the physician's judgment about the severity of the patient's condition, and the prediction system reflects this back after the notes have been processed.
 
-There is more work to be done to determine the optimal type and range of features to be included in streaming medical reporting and prediction systems.   The information and prediction should be informative and predictive to be both practical and useful.  Clinical notes have been confirmed to be informative in our work.  The subtlety in how they are used to generate predictive features still needs to be discovered.    
+There is more work to be done to determine the optimal type and range of features to be included in streaming medical reporting and prediction systems.   The information and prediction should be informative and predictive to be both practical and useful.  Clinical notes have been confirmed to be informative in our work.  The subtlety in how they are used to generate predictive features still needs to be discovered.
 
 
 % use section* for acknowledgment
 % \section*{Acknowledgment}
 % TBD - Bryan's Super Awesome Ackowledgement Secion of Gracious Professionalism
+
+\section{Supplemental Material}
+\href{https://drive.google.com/folderview?id=0B-7SehP6iq_ybVM4aDgzQUh0Tnc&usp=sharing}{Code use to produce this paper is available from this link.}
 
 %\bibliography{cse8803project}
 %\bibliographystyle{abbrv}
@@ -504,20 +507,20 @@ M.~Ghassemi, T.~Naumann, F.~Doshi-Velez, N.~Brimmer, R.~Joshi, A.~Rumshisky,
   pages 75--84, New York, NY, USA, 2014. ACM.
 
 \bibitem{mozomi_2015}
-Nozomi Nori , Hisashi Kashima , Kazuto Yamashita , Hiroshi Ikai , Yuichi Imanaka, 
-\newblock Simultaneous Modeling of Multiple Diseases for Mortality Prediction in Acute Hospital Care, 
-\newblock In {\em Proceedings of the 21th {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery} 
+Nozomi Nori , Hisashi Kashima , Kazuto Yamashita , Hiroshi Ikai , Yuichi Imanaka,
+\newblock Simultaneous Modeling of Multiple Diseases for Mortality Prediction in Acute Hospital Care,
+\newblock In {\em Proceedings of the 21th {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery}
 and {Data} {Mining}}, August 10-13, 2015, Sydney, NSW, Australia
 
 \bibitem{ghassemi_2015}
-Marzyeh Ghassemi , Marco A. F. Pimentel , Tristan Naumann , Thomas Brennan , David A. Clifton , Peter Szolovits , Mengling Feng, 
-\newblock A multivariate time-series modeling approach to severity of illness assessment and forecasting in ICU with sparse, heterogeneous clinical data, 
+Marzyeh Ghassemi , Marco A. F. Pimentel , Tristan Naumann , Thomas Brennan , David A. Clifton , Peter Szolovits , Mengling Feng,
+\newblock A multivariate time-series modeling approach to severity of illness assessment and forecasting in ICU with sparse, heterogeneous clinical data,
 \newblock In {\em {Proceedings} of the {Twenty-Ninth} {AAAI} {Conference} on {Artificial} {Intelligence}}, p.446-453, January 25-30, 2015, Austin, Texas
 
 \bibitem{caballero_2015}
-Karla L. Caballero, Ram Akella, 
-\newblock Dynamically Modeling Patient's Health State from Electronic Medical Records: A Time Series Approach, 
-\newblock In {\em {Proceedings} of the {21th} {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery} 
+Karla L. Caballero, Ram Akella,
+\newblock Dynamically Modeling Patient's Health State from Electronic Medical Records: A Time Series Approach,
+\newblock In {\em {Proceedings} of the {21th} {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery}
 and {Data} {Mining}}, August 10-13, 2015, Sydney, NSW, Australia
 
 

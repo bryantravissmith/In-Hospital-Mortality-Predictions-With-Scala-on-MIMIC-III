@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  23 APR 2016 13:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  23 APR 2016 13:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -357,13 +357,13 @@ Missing character: There is no ™ in font ptmr7t!
 
 
 ]
-<admission_count.png, id=69, 491.436pt x 219.219pt>
+<admission_count.png, id=73, 491.436pt x 219.219pt>
 File: admission_count.png Graphic file (type png)
  <use admission_count.png>
 Package pdftex.def Info: admission_count.png used on input line 457.
 (pdftex.def)             Requested size: 227.62204pt x 101.5377pt.
 
-<percent_mortality.png, id=71, 491.436pt x 218.7372pt>
+<percent_mortality.png, id=75, 491.436pt x 218.7372pt>
 File: percent_mortality.png Graphic file (type png)
 
 <use percent_mortality.png>
@@ -381,7 +381,7 @@ Missing character: There is no â in font ptmr7t!
 Missing character: There is no € in font ptmr7t!
 Missing character: There is no ™ in font ptmr7t!
 [2 <./admission_count.png> <./percent_mortality.png>]
-<auc.png, id=79, 789.6702pt x 617.1858pt>
+<auc.png, id=83, 789.6702pt x 617.1858pt>
 File: auc.png Graphic file (type png)
  <use auc.png>
 Package pdftex.def Info: auc.png used on input line 469.
@@ -390,37 +390,37 @@ Missing character: There is no â in font ptmr7t!
 Missing character: There is no € in font ptmr7t!
 Missing character: There is no ™ in font ptmr7t!
  [3 <./auc.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 541--541
+Underfull \hbox (badness 10000) in paragraph at lines 544--544
 []|\OT1/ptm/m/n/10 Odds
  []
 
 
-Overfull \hbox (4.19843pt too wide) in paragraph at lines 546--546
+Overfull \hbox (4.19843pt too wide) in paragraph at lines 549--549
 []|\OT1/ptm/m/n/10 111241| 
  []
 
 
-Underfull \vbox (badness 10000) detected at line 560
+Underfull \vbox (badness 10000) detected at line 563
  []
 
 [4
 
 ]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 582.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 585.
  [5]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 582.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 585.
  (./mortality_predictions.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 582.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 582.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 585.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 585.
 Package rerunfilecheck Info: File `mortality_predictions.out' has not changed.
-(rerunfilecheck)             Checksum: 9CA78337578BBD25D5339FEAA5855C9F;594.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 582.
+(rerunfilecheck)             Checksum: EEC9A979CA9A1EEB87708A18FE818547;651.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 585.
  ) 
 Here is how much of TeX's memory you used:
- 6098 strings out of 493089
- 95159 string characters out of 6134842
+ 6100 strings out of 493089
+ 95179 string characters out of 6134842
  200558 words of memory out of 5000000
- 9522 multiletter control sequences out of 15000+600000
+ 9523 multiletter control sequences out of 15000+600000
  37366 words of font info for 67 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  29i,6n,28p,1163b,505s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -429,10 +429,10 @@ exlive/2015/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/201
 5/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2015/texmf-d
 ist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/
 type1/urw/times/utmri8a.pfb>
-Output written on mortality_predictions.pdf (5 pages, 229636 bytes).
+Output written on mortality_predictions.pdf (5 pages, 230030 bytes).
 PDF statistics:
- 122 PDF objects out of 1000 (max. 8388607)
- 103 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
- 96 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 127 PDF objects out of 1000 (max. 8388607)
+ 108 compressed objects within 2 object streams
+ 32 named destinations out of 1000 (max. 500000)
+ 104 words of extra memory for PDF output out of 10000 (max. 10000000)
 
